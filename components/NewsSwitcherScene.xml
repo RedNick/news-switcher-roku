@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  The app's only screen: a full-screen live stream with an information bar
+  along the bottom that can be shown or hidden.
+-->
+<component name="NewsSwitcherScene" extends="Scene">
+  <script type="text/brightscript" uri="NewsSwitcherScene.brs" />
+
+  <children>
+    <Video
+      id="newsVideo"
+      width="1920"
+      height="1080"
+      enableUI="false"
+      mute="true" />
+
+    <!-- Information bar: channel names, countdown and remote hints. -->
+    <Group id="infoBar" translation="[0, 840]">
+      <Rectangle width="1920" height="240" color="0x000000B0" />
+
+      <Label
+        id="channelNameLabel"
+        translation="[80, 30]"
+        width="1100"
+        font="font:LargeBoldSystemFont"
+        color="0xFFFFFFFF" />
+
+      <Label
+        id="channelStatusLabel"
+        translation="[80, 100]"
+        width="1100"
+        font="font:SmallSystemFont"
+        color="0xC8C8C8FF" />
+
+      <Label
+        id="nextChannelLabel"
+        translation="[1180, 34]"
+        width="660"
+        horizAlign="right"
+        font="font:MediumSystemFont"
+        color="0xFFFFFFFF" />
+
+      <Label
+        id="countdownLabel"
+        translation="[1180, 90]"
+        width="660"
+        horizAlign="right"
+        font="font:MediumBoldSystemFont"
+        color="0xFFD24AFF" />
+
+      <Label
+        id="remoteHintsLabel"
+        translation="[80, 170]"
+        width="1760"
+        font="font:SmallestSystemFont"
+        color="0x9A9A9AFF"
+        text="Left / Right: change channel     OK: sound on / off     Up / Down: hide this bar" />
+    </Group>
+  </children>
+</component>
