@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Downloads the latest channels.json from GitHub in the background, so the
+  screen never freezes while waiting on the network. Network requests are
+  only allowed inside a Task node on Roku.
+-->
+<component name="ChannelListLoader" extends="Task">
+  <interface>
+    <field id="channelListUrl" type="string" />
+    <!-- Set to the parsed channel list, or invalid if the download failed. -->
+    <field id="channelList" type="assocarray" />
+  </interface>
+  <script type="text/brightscript" uri="ChannelListLoader.brs" />
+</component>

@@ -1,0 +1,15 @@
+title=Hourly News Switcher
+major_version=1
+minor_version=0
+build_version=1
+
+# Artwork shown on the Roku home screen and while the app starts.
+mm_icon_focus_hd=pkg:/images/icon_focus_hd.png
+mm_icon_focus_fhd=pkg:/images/icon_focus_fhd.png
+splash_screen_hd=pkg:/images/splash_hd.png
+splash_screen_fhd=pkg:/images/splash_fhd.png
+splash_color=#000000
+splash_min_time=1000
+
+ui_resolutions=fhd
+supports_input_launch=1
