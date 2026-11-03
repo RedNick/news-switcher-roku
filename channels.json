@@ -9,7 +9,6 @@
     { "name": "CBS News 24/7",      "streamUrl": "https://cbsn-us.cbsnstream.cbsnews.com/out/v1/55a8648e8f134e82a470f83d562deeca/master.m3u8" },
     { "name": "Euronews",           "streamUrl": "https://cdn-euronews.akamaized.net/live/eds/euronews-en/25002/index.m3u8" },
     { "name": "TRT World",          "streamUrl": "https://tv-trtworld.medya.trt.com.tr/master.m3u8" },
-    { "name": "CNA",                "streamUrl": "https://d2e1asnsl7br7b.cloudfront.net/7782e205e72f43aeb4a48ec97f66ebbe/index.m3u8" },
     { "name": "Bloomberg",          "streamUrl": "https://www.bloomberg.com/media-manifest/streams/us.m3u8" }
   ]
 }
