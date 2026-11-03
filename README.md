@@ -28,7 +28,7 @@ broken stream link can be fixed here without reinstalling the app. A copy is
 also built into the app, in case GitHub can't be reached.
 
 Current channels: Al Jazeera English, DW News, France 24 English, NHK World,
-CBS News 24/7, ABC News Live, Euronews, TRT World, CNA and Bloomberg.
+CBS News 24/7, Euronews, TRT World, CNA and Bloomberg.
 
 Stream links change from time to time. If one stops working, search for the
 channel's current `.m3u8` link (the [iptv-org](https://github.com/iptv-org/iptv)
