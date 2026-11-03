@@ -21,7 +21,7 @@ sub init()
 
     ' --- State ---
     m.newsChannels = []                ' The channels to rotate through.
-    m.secondsBeforeHourToSwitch = 60   ' Overwritten by the channel list.
+    m.secondsBeforeHourToSwitch = 20   ' Overwritten by the channel list.
     m.currentHourSlot = invalid        ' Which hourly slot is currently showing.
     m.manualChannelOffset = 0          ' Added by Left/Right and by skipping dead streams.
     m.viewerWantsSound = false         ' Becomes true once the viewer unmutes.
