@@ -42,6 +42,11 @@ tools/build-zip.sh
 
 This writes `dist/hourly-news-switcher.zip`.
 
+GitHub Actions also builds it for you. Every pull request gets the zip as a
+download on its workflow run, and every change merged to `main` is published as
+a release. The newest zip is always at
+[releases/latest/download/hourly-news-switcher.zip](https://github.com/RedNick/news-switcher-roku/releases/latest/download/hourly-news-switcher.zip).
+
 ## Installing on your own Roku (sideloading)
 
 1. On the Roku remote, press **Home ×3, Up ×2, Right, Left, Right, Left, Right**.
