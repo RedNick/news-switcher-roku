@@ -1,0 +1,53 @@
+# Builds the Roku app zip.
+#
+# - On every pull request: checks the BrightScript and uploads the zip as a
+#   workflow artifact, so changes can be tried before merging.
+# - On every push to main (and when run by hand from the Actions tab): also
+#   publishes the zip as a GitHub release. The newest one is always at
+#   https://github.com/RedNick/news-switcher-roku/releases/latest/download/hourly-news-switcher.zip
+name: Build Roku zip
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write  # needed to create releases
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Check the BrightScript for errors
+        run: npx --yes brighterscript@0.65 --rootDir . --createPackage false --stagingDir "$RUNNER_TEMP/bsc-staging"
+
+      # Roku uses the build number to tell versions apart, so give every
+      # build a higher one than the last.
+      - name: Stamp the build number into the manifest
+        run: sed -i "s/^build_version=.*/build_version=${{ github.run_number }}/" manifest
+
+      - name: Build the zip
+        run: tools/build-zip.sh
+
+      - name: Upload the zip to this workflow run
+        uses: actions/upload-artifact@v4
+        with:
+          name: hourly-news-switcher
+          path: dist/hourly-news-switcher.zip
+
+      - name: Publish the zip as a release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          app_version="$(grep '^major_version=' manifest | cut -d= -f2).$(grep '^minor_version=' manifest | cut -d= -f2).${{ github.run_number }}"
+          gh release create "v$app_version" dist/hourly-news-switcher.zip \
+            --title "Hourly News Switcher $app_version" \
+            --notes "Built from ${{ github.sha }}. Sideload this zip onto a Roku in developer mode, or upload it as a beta channel." \
+            --target "${{ github.sha }}" \
+            --latest
