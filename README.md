@@ -40,7 +40,9 @@ lists are a good place to look) and update `channels.json`.
 tools/build-zip.sh
 ```
 
-This writes `dist/hourly-news-switcher.zip`.
+This writes `dist/hourly-news-switcher.zip`. If ImageMagick is installed, the
+version (for example `v1.0.7`) is written onto the home screen icons in the
+zip. The version also shows at the bottom right of the info bar.
 
 GitHub Actions also builds it for you. Every pull request gets the zip as a
 download on its workflow run, and every change merged to `main` is published as

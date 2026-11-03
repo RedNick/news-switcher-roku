@@ -35,9 +35,11 @@ sub init()
     m.channelStatusLabel = m.top.findNode("channelStatusLabel")
     m.nextChannelLabel = m.top.findNode("nextChannelLabel")
     m.countdownLabel = m.top.findNode("countdownLabel")
+    m.versionLabel = m.top.findNode("versionLabel")
 
     m.newsVideo.observeField("state", "onVideoStateChanged")
     m.infoBar.visible = loadInfoBarVisiblePreference()
+    m.versionLabel.text = "Version " + CreateObject("roAppInfo").GetVersion()
 
     ' Ticks once a second to update the countdown and switch on the hour.
     m.clockTimer = CreateObject("roSGNode", "Timer")

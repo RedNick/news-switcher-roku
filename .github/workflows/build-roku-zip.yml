@@ -31,7 +31,13 @@ jobs:
       - name: Stamp the build number into the manifest
         run: sed -i "s/^build_version=.*/build_version=${{ github.run_number }}/" manifest
 
+      # Used to write the version onto the home screen icons.
+      - name: Install ImageMagick
+        run: command -v convert || (sudo apt-get update && sudo apt-get install -y imagemagick fonts-dejavu-core)
+
       - name: Build the zip
+        env:
+          REQUIRE_VERSION_ON_ICONS: "1"
         run: tools/build-zip.sh
 
       - name: Upload the zip to this workflow run

@@ -51,10 +51,19 @@
       <Label
         id="remoteHintsLabel"
         translation="[80, 170]"
-        width="1760"
+        width="1300"
         font="font:SmallestSystemFont"
         color="0x9A9A9AFF"
         text="Left / Right: change channel     OK: sound on / off     Up / Down: hide this bar" />
+
+      <!-- The installed app version, filled in from the manifest at startup. -->
+      <Label
+        id="versionLabel"
+        translation="[1380, 170]"
+        width="460"
+        horizAlign="right"
+        font="font:SmallestSystemFont"
+        color="0x9A9A9AFF" />
     </Group>
   </children>
 </component>
