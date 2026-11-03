@@ -1,7 +1,7 @@
 # Hourly News Switcher for Roku
 
 The Roku version of the [hourly news switcher](https://github.com/RedNick/news-switcher).
-It plays a live news channel full screen and moves to the next channel 60 seconds
+It plays a live news channel full screen and moves to the next channel 20 seconds
 before every clock hour, so the new channel's on-the-hour headlines are already
 playing. It starts muted.
 
