@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
   The app's only screen: a full-screen live stream with an information bar
-  along the bottom that can be shown or hidden.
+  along the bottom that can be shown or hidden, and a channels menu that
+  slides over the left side.
 -->
 <component name="NewsSwitcherScene" extends="Scene">
   <script type="text/brightscript" uri="NewsSwitcherScene.brs" />
@@ -54,7 +55,7 @@
         width="1300"
         font="font:SmallestSystemFont"
         color="0x9A9A9AFF"
-        text="Left / Right: change channel     OK: sound on / off     Up / Down: hide this bar" />
+        text="Left / Right: change channel     OK: sound     Up / Down: hide this bar     *: choose channels" />
 
       <!-- The installed app version, filled in from the manifest at startup. -->
       <Label
@@ -64,6 +65,36 @@
         horizAlign="right"
         font="font:SmallestSystemFont"
         color="0x9A9A9AFF" />
+    </Group>
+
+    <!--
+      Channels menu, opened with the * button. Each channel has a tick for
+      whether it's in the hourly rotation, like the web version's Sources menu.
+    -->
+    <Group id="sourcesMenu" visible="false">
+      <Rectangle width="760" height="1080" color="0x000000E0" />
+
+      <Label
+        translation="[80, 70]"
+        width="600"
+        font="font:LargeBoldSystemFont"
+        color="0xFFFFFFFF"
+        text="Channels" />
+
+      <Label
+        translation="[80, 140]"
+        width="600"
+        wrap="true"
+        font="font:SmallestSystemFont"
+        color="0x9A9A9AFF"
+        text="OK: in / out of the rotation     Play: watch now     * or Back: close" />
+
+      <CheckList
+        id="sourceList"
+        translation="[80, 230]"
+        itemSize="[600, 64]"
+        numRows="12"
+        vertFocusAnimationStyle="floatingFocus" />
     </Group>
   </children>
 </component>
