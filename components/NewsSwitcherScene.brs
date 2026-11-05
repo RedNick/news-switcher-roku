@@ -6,7 +6,8 @@
 ' The schedule is worked out from the clock, not from when the app was
 ' opened, so every Roku running the app (and the web version) shows the same
 ' channel at the same time. Left/Right on the remote shift the whole rotation
-' by one channel.
+' by one channel, and the channels menu (the * button) takes channels in and
+' out of the rotation.
 
 sub init()
     ' Where the app looks for the latest channel list. The copy bundled in the
@@ -20,7 +21,9 @@ sub init()
     m.secondsPerHour = 3600
 
     ' --- State ---
-    m.newsChannels = []                ' The channels to rotate through.
+    m.newsChannels = []                ' Every channel in the channel list.
+    m.disabledChannelNames = loadDisabledChannelNames() ' Channels taken out of the rotation.
+    m.currentChannel = invalid         ' The m.newsChannels entry now playing.
     m.secondsBeforeHourToSwitch = 20   ' Overwritten by the channel list.
     m.currentHourSlot = invalid        ' Which hourly slot is currently showing.
     m.manualChannelOffset = 0          ' Added by Left/Right and by skipping dead streams.
@@ -36,10 +39,13 @@ sub init()
     m.nextChannelLabel = m.top.findNode("nextChannelLabel")
     m.countdownLabel = m.top.findNode("countdownLabel")
     m.versionLabel = m.top.findNode("versionLabel")
+    m.sourcesMenu = m.top.findNode("sourcesMenu")
+    m.sourceList = m.top.findNode("sourceList")
 
     m.newsVideo.observeField("state", "onVideoStateChanged")
     m.infoBar.visible = loadInfoBarVisiblePreference()
     m.versionLabel.text = "Version " + CreateObject("roAppInfo").GetVersion()
+    m.sourceList.observeField("itemSelected", "onSourceTickChanged")
 
     ' Ticks once a second to update the countdown and switch on the hour.
     m.clockTimer = CreateObject("roSGNode", "Timer")
@@ -55,6 +61,7 @@ sub init()
 
     applyChannelList(readBundledChannelList())
     startDownloadingLatestChannelList()
+    renderSourceList()
 
     m.top.setFocus(true)
     showChannelForCurrentSlot()
@@ -94,7 +101,49 @@ sub onLatestChannelListDownloaded()
     ' Only restart the stream if the list actually changed.
     if FormatJson(m.newsChannels) <> previousChannelsAsText
         m.consecutiveFailedChannels = 0
+        renderSourceList()
         showChannelForCurrentSlot()
+    end if
+end sub
+
+' --- Which channels are in the rotation ------------------------------------
+
+function isChannelInRotation(newsChannel as object) as boolean
+    return not m.disabledChannelNames.DoesExist(newsChannel.name)
+end function
+
+function countChannelsInRotation() as integer
+    channelsInRotation = 0
+    for each newsChannel in m.newsChannels
+        if isChannelInRotation(newsChannel) then channelsInRotation = channelsInRotation + 1
+    end for
+    return channelsInRotation
+end function
+
+function getActiveChannels() as object
+    activeChannels = []
+    for each newsChannel in m.newsChannels
+        if isChannelInRotation(newsChannel) then activeChannels.Push(newsChannel)
+    end for
+    ' Never let the rotation be empty: fall back to every channel.
+    if activeChannels.Count() = 0 then return m.newsChannels
+    return activeChannels
+end function
+
+' Finds a channel's position in a list by name, or -1 if it isn't there.
+function findChannelIndex(channels as object, newsChannel as object) as integer
+    for channelIndex = 0 to channels.Count() - 1
+        if channels[channelIndex].name = newsChannel.name then return channelIndex
+    end for
+    return -1
+end function
+
+' Sets the offset so the current slot lands on the given channel. The
+' rotation then carries on in order from there.
+sub pointRotationAt(newsChannel as object)
+    activeIndex = findChannelIndex(getActiveChannels(), newsChannel)
+    if activeIndex <> -1
+        m.manualChannelOffset = activeIndex - m.currentHourSlot
     end if
 end sub
 
@@ -114,14 +163,14 @@ function getSlotStartTime(hourSlot as integer) as integer
     return hourSlot * m.secondsPerHour - m.secondsBeforeHourToSwitch
 end function
 
-' Wraps any whole number (including negatives) into a valid channel index.
-function wrapChannelIndex(index as integer) as integer
-    channelCount = m.newsChannels.Count()
-    return ((index mod channelCount) + channelCount) mod channelCount
+' Wraps any whole number (including negatives) into the range 0..count-1.
+function wrapIndex(index as integer, count as integer) as integer
+    return ((index mod count) + count) mod count
 end function
 
-function getChannelIndexForSlot(hourSlot as integer) as integer
-    return wrapChannelIndex(hourSlot + m.manualChannelOffset)
+function getChannelForSlot(hourSlot as integer) as object
+    activeChannels = getActiveChannels()
+    return activeChannels[wrapIndex(hourSlot + m.manualChannelOffset, activeChannels.Count())]
 end function
 
 ' --- Playing a channel ------------------------------------------------------
@@ -129,10 +178,12 @@ end function
 sub showChannelForCurrentSlot()
     m.currentHourSlot = getHourSlotAt(getCurrentTimeInSeconds())
     m.allChannelsFailed = false
-    playChannel(m.newsChannels[getChannelIndexForSlot(m.currentHourSlot)])
+    playChannel(getChannelForSlot(m.currentHourSlot))
 end sub
 
 sub playChannel(newsChannel as object)
+    m.currentChannel = newsChannel
+
     streamContent = CreateObject("roSGNode", "ContentNode")
     streamContent.url = newsChannel.streamUrl
     streamContent.title = newsChannel.name
@@ -176,7 +227,7 @@ sub skipToNextChannelAfterFailure()
     m.streamStartTimer.control = "stop"
     m.consecutiveFailedChannels = m.consecutiveFailedChannels + 1
 
-    if m.consecutiveFailedChannels >= m.newsChannels.Count()
+    if m.consecutiveFailedChannels >= getActiveChannels().Count()
         m.newsVideo.control = "stop"
         m.allChannelsFailed = true
         m.channelNameLabel.text = "No channels are playing"
@@ -216,7 +267,7 @@ end function
 ' --- Labels -----------------------------------------------------------------
 
 sub updateNextChannelLabel()
-    nextChannel = m.newsChannels[getChannelIndexForSlot(m.currentHourSlot + 1)]
+    nextChannel = getChannelForSlot(m.currentHourSlot + 1)
     m.nextChannelLabel.text = "Next: " + nextChannel.name
 end sub
 
@@ -234,7 +285,22 @@ end sub
 function onKeyEvent(key as string, press as boolean) as boolean
     if not press then return false
 
-    if key = "right"
+    ' While the channels menu is open, the list handles Up, Down and OK
+    ' itself, so only the other keys reach here.
+    if m.sourcesMenu.visible
+        if key = "options" or key = "back"
+            setSourcesMenuOpen(false)
+        else if key = "play"
+            watchChannelNow(m.newsChannels[m.sourceList.itemFocused])
+            setSourcesMenuOpen(false)
+        end if
+        return true
+    end if
+
+    if key = "options"
+        setSourcesMenuOpen(true)
+        return true
+    else if key = "right"
         changeChannelManually(1)
         return true
     else if key = "left"
@@ -261,7 +327,104 @@ sub changeChannelManually(channelStep as integer)
     showChannelForCurrentSlot()
 end sub
 
+' --- Channels menu ----------------------------------------------------------
+
+sub setSourcesMenuOpen(menuIsOpen as boolean)
+    m.sourcesMenu.visible = menuIsOpen
+    if menuIsOpen
+        renderSourceList()
+        m.sourceList.setFocus(true)
+    else
+        m.top.setFocus(true)
+    end if
+end sub
+
+' Rebuilds the menu: one row per channel, ticked if it's in the rotation.
+' The channel playing now is marked with a dot.
+sub renderSourceList()
+    listContent = CreateObject("roSGNode", "ContentNode")
+    tickStates = []
+    for each newsChannel in m.newsChannels
+        listRow = listContent.CreateChild("ContentNode")
+        listRow.title = newsChannel.name
+        if m.currentChannel <> invalid and newsChannel.name = m.currentChannel.name
+            listRow.title = newsChannel.name + "  " + Chr(9679)
+        end if
+        tickStates.Push(isChannelInRotation(newsChannel))
+    end for
+
+    focusedRow = m.sourceList.itemFocused
+    m.sourceList.content = listContent
+    m.sourceList.checkedState = tickStates
+    if focusedRow > 0 and focusedRow < m.newsChannels.Count()
+        m.sourceList.jumpToItem = focusedRow
+    end if
+end sub
+
+' The list has already flipped the tick on the row the viewer pressed OK on.
+sub onSourceTickChanged()
+    rowIndex = m.sourceList.itemSelected
+    newsChannel = m.newsChannels[rowIndex]
+    setChannelInRotation(newsChannel, m.sourceList.checkedState[rowIndex])
+end sub
+
+sub setChannelInRotation(newsChannel as object, isInRotation as boolean)
+    if isInRotation
+        m.disabledChannelNames.Delete(newsChannel.name)
+    else
+        m.disabledChannelNames[newsChannel.name] = true
+        ' Keep at least one channel in the rotation.
+        if countChannelsInRotation() = 0
+            m.disabledChannelNames.Delete(newsChannel.name)
+        end if
+    end if
+    saveDisabledChannelNames()
+
+    ' Keep the current channel playing if it's still in the rotation;
+    ' otherwise move on to whatever the rotation now gives for this hour.
+    if m.currentChannel <> invalid and isChannelInRotation(m.currentChannel)
+        pointRotationAt(m.currentChannel)
+        updateNextChannelLabel()
+    else
+        m.consecutiveFailedChannels = 0
+        showChannelForCurrentSlot()
+    end if
+    renderSourceList()
+end sub
+
+' Plays the chosen channel now and continues the rotation from it. A channel
+' picked to watch is put back in the rotation if it was out.
+sub watchChannelNow(newsChannel as object)
+    if not isChannelInRotation(newsChannel)
+        m.disabledChannelNames.Delete(newsChannel.name)
+        saveDisabledChannelNames()
+    end if
+    m.consecutiveFailedChannels = 0
+    pointRotationAt(newsChannel)
+    showChannelForCurrentSlot()
+end sub
+
 ' --- Saved preferences ------------------------------------------------------
+
+' Channels are remembered by name, so the setting survives stream link changes.
+function loadDisabledChannelNames() as object
+    savedSettings = CreateObject("roRegistrySection", "newsSwitcher")
+    disabledChannelNames = {}
+    savedNames = ParseJson(savedSettings.Read("disabledChannelNames"))
+    if type(savedNames) = "roArray"
+        for each channelName in savedNames
+            disabledChannelNames[channelName] = true
+        end for
+    end if
+    return disabledChannelNames
+end function
+
+sub saveDisabledChannelNames()
+    savedSettings = CreateObject("roRegistrySection", "newsSwitcher")
+    savedSettings.Write("disabledChannelNames", FormatJson(m.disabledChannelNames.Keys()))
+    savedSettings.Flush()
+end sub
+
 
 function loadInfoBarVisiblePreference() as boolean
     savedSettings = CreateObject("roRegistrySection", "newsSwitcher")

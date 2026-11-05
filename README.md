@@ -15,7 +15,11 @@ stream (HLS) directly.
 | Left / Right    | Previous / next channel          |
 | OK (or Play)    | Sound on / off                   |
 | Up / Down       | Show / hide the information bar  |
+| * (Options)     | Open the channels menu           |
 | Back            | Leave the app                    |
+
+In the channels menu, OK takes the highlighted channel in or out of the hourly
+rotation, and Play watches it now. Your choices are remembered on the Roku.
 
 If a channel hasn't started playing within 30 seconds, or its stream fails,
 the app skips to the next one.
